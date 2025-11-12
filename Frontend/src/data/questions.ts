@@ -168,7 +168,7 @@ export const questionSlides: QuestionSlide[] = [
         category: "public_sector",
         type: "select",
         //Sí: 1.0 No: 0.0
-        options: ["Sí", "No"],
+        options: ["No","Sí"],
       },
       {
         id: 15,
@@ -176,7 +176,7 @@ export const questionSlides: QuestionSlide[] = [
         category: "small_biz_owner",
         type: "select",
         //Sí: 1.0 No: 0.0
-        options: ["Sí", "No"],
+        options: ["No","Sí"],
       },
     ],
   },
@@ -189,21 +189,21 @@ export const questionSlides: QuestionSlide[] = [
         text: "¿Eres propietario(a) de tu vivienda?",
         category: "home_owner",
         type: "select",
-        options: ["Sí", "No"],
+        options: ["No","Sí"],
       },
       {
         id: 17,
         text: "¿Posees un automóvil?",
         category: "owns_car",
         type: "select",
-        options: ["Sí", "No"],
+        options: ["No","Sí"],
       },
       {
         id: 18,
         text: "¿Votaste en las elecciones pasadas?",
         category: "voted_last",
         type: "select",
-        options: ["Sí", "No"],
+        options: ["No","Sí"],
       },
     ],
   },
