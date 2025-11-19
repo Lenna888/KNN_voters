@@ -1,0 +1,9 @@
+{
+    "best_k": 7,
+    "metric": "cosine",
+    "n_features_in": 24,
+    "n_features_out_lda": 10,
+    "n_features_out_lr": 11,
+    "n_features_final": 21,
+    "model_date": "2025-11-19T00:15:36.365559"
+}
