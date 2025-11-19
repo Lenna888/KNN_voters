@@ -1,44 +1,5 @@
-# ===================================================================
-# Archivo .gitignore para la RAÍZ del repositorio
-# ===================================================================
-
-# Dependencias (ignorar en cualquier subcarpeta)
-**/node_modules
-
-# Archivos de 'build' (producción) (ignorar en cualquier subcarpeta)
-**/dist
-**/dist-ssr
-**/.vite
-**/coverage
-
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Archivos de variables de entorno (¡Seguridad!)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.*.local
-*.local
-
-# Archivos de Sistema Operativo
-.DS_Store
-Thumbs.db
-
-# Archivos de Editor de Código
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+/node_modules
+.evn
+__pycache__/
+/venv
+/ipynb_checkpoints
