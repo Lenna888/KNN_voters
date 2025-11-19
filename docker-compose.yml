@@ -1,0 +1,54 @@
+services:
+  # --- Base de Datos ---
+  db:
+    image: postgres:15-alpine
+    container_name: knn_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: knn_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - knn-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d knn_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- Backend ---
+  backend:
+    build: ./Backend
+    container_name: knn_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/knn_db
+    networks:
+      - knn-network
+    depends_on:
+      - db
+
+  # --- Frontend ---
+  frontend:
+    build: ./Frontend
+    container_name: knn_frontend
+    ports:
+      - "8080:8080"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - knn-network
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  knn-network:
+    driver: bridge
