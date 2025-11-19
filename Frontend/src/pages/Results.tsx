@@ -1,111 +1,52 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Home, RotateCcw, Users } from "lucide-react";
-
-// 1. Importa tu lista de candidatos (asegúrate que la ruta sea correcta)
-import { candidates, Candidate } from "@/data/candidates";
-
-// 2. Importa tu mapeador
-import { mapAnswersForBackend, RawSurveyAnswers } from "@/survey/survey-mapper";
+import { candidates } from "@/data/candidates";
 
 const Results = () => {
   const navigate = useNavigate();
-  const [topCandidate, setTopCandidate] = useState<Candidate | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const location = useLocation(); // 2. Hook para recibir los datos
+  const [topCandidate, setTopCandidate] = useState<((typeof candidates)[number] & { confidence: number }) | null>(null);
 
   useEffect(() => {
-    // Función asíncrona autoejecutable para manejar la lógica
-    const fetchPrediction = async () => {
-      const answersString = localStorage.getItem("surveyAnswers");
-      if (!answersString) {
-        navigate("/survey"); // Redirige si no hay respuestas
-        return;
-      }
+    // LEER EL ESTADO DE LA NAVEGACIÓN
+    const state = location.state;
 
-      try {
-        // 3. Lee las respuestas CRUDAS (ej: { "gender": "Femenino" })
-        const rawAnswers: RawSurveyAnswers = JSON.parse(answersString);
+    if (!state || !state.result) {
+      // Si alguien entra directo a /results sin hacer la encuesta, lo sacamos
+      console.warn("No hay resultados en el estado. Redirigiendo...");
+      navigate("/survey");
+      return;
+    }
 
-        // 4. Mapea a formato NUMÉRICO (ej: { "gender": 0 })
-        const jsonForBackend = mapAnswersForBackend(rawAnswers);
-        console.log("Respuestas crudas desde localStorage:", rawAnswers);
-        console.log("Respuestas mapeadas para backend:", jsonForBackend);
+    const { candidate, confidence } = state.result;
+    const cleanName = candidate.replace("CAND_", "");
+    console.log("Nombre limpio para buscar:", cleanName);
+    // BUSCAR EL CANDIDATO VISUALMENTE
+    const foundCandidate = candidates.find(
+      (c) => c.name.toLowerCase() === cleanName.toLowerCase()
+    );
 
-        console.log("Enviando este JSON al backend:", jsonForBackend);
-
-        // 5. Llama a tu backend de FastAPI
-        const response = await fetch("http://127.0.0.1:8000/predict", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(jsonForBackend),
-        });
-
-        if (!response.ok) {
-          throw new Error("Hubo un problema con la respuesta del servidor.");
-        }
-
-        const result = await response.json();
-        // (El backend devuelve ej: { predicted_candidate_name: "CAND_Electra" })
-
-        console.log("Predicción del backend:", result.predicted_candidate_name);
-
-        // 6. Encuentra el objeto candidato completo usando el nombre
-        const foundCandidate = candidates.find(
-          (c) => c.name === result.predicted_candidate_name
-        );
-
-        if (foundCandidate) {
-          setTopCandidate(foundCandidate);
-        } else {
-          throw new Error(
-            "El candidato predicho no se encontró en la lista local."
-          );
-        }
-      } catch (error: any) {
-        console.error("Error al obtener la predicción:", error);
-        setError(error.message || "No se pudo obtener la predicción.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPrediction();
-  }, [navigate]); // navigate es una dependencia de useEffect
+    if (foundCandidate) {
+      setTopCandidate({ ...foundCandidate, confidence });
+    } else {
+      console.error(`CRÍTICO: No encontré a "${cleanName}" (Original: ${candidate})`);
+      // Fallback opcional si no se encuentra
+    }
+  }, [navigate, location]);
 
   // --- RENDERIZADO ---
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <p className="text-xl text-muted-foreground animate-pulse">
-          Calculando tu candidato ideal...
-        </p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
-        <p className="text-xl text-destructive mb-4">{error}</p>
-        <Button onClick={() => navigate("/survey")}>
-          <RotateCcw className="mr-2 h-4 w-4" />
-          Intentar de nuevo
-        </Button>
-      </div>
-    );
-  }
-
   if (!topCandidate) {
-    // Esto no debería pasar, pero por si acaso
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl animate-pulse">Procesando resultados...</p>
+      </div>
+    );
   }
 
-  // Si todo salió bien, muestra el candidato
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
       <div className="container mx-auto px-4 py-12">
@@ -115,8 +56,7 @@ const Results = () => {
               ¡Tu Candidato Ideal!
             </h1>
             <p className="text-xl text-muted-foreground">
-              Basado en tus respuestas, este es el candidato predicho por
-              nuestro modelo.
+              Coincidencia del <strong>{(topCandidate.confidence * 100).toFixed(1)}%</strong>
             </p>
           </div>
 
@@ -130,8 +70,7 @@ const Results = () => {
                   className="w-32 h-32 rounded-full flex items-center justify-center text-5xl font-bold text-white shadow-lg"
                   style={{ backgroundColor: topCandidate.color }}
                 >
-                  {topCandidate.name.split("_")[1][0]}{" "}
-                  {/* Muestra la inicial del nombre */}
+                  {topCandidate.name[0]} 
                 </div>
               </div>
               <CardTitle className="text-4xl mb-3">
@@ -165,13 +104,13 @@ const Results = () => {
             </Button>
             <Button
               onClick={() => {
-                localStorage.removeItem("surveyAnswers");
+                localStorage.removeItem("surveyDraft"); // Limpiamos el borrador
                 navigate("/survey");
               }}
               className="bg-gradient-primary"
             >
               <RotateCcw className="mr-2 h-4 w-4" />
-              Realizar encuesta de nuevo{" "}
+              Realizar encuesta de nuevo
             </Button>
           </div>
         </div>
